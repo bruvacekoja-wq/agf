@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+model Connection {
+  id           String   @id @default(cuid())
+  provider     String
+  providerUser String
+  displayName  String?
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@unique([provider, providerUser])
+}
+model Streamer {
+  id          String   @id @default(cuid())
+  provider    String
+  providerId  String
+  displayName String
+  permission  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  @@unique([provider, providerId])
+}
+model Clip {
+  id          String   @id @default(cuid())
+  source      String
+  title       String
+  sourceUrl   String
+  status      String   @default("review")
+  createdAt   DateTime @default(now())
+}
