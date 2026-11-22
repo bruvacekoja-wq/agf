@@ -8,7 +8,9 @@ export async function GET() {
     });
 
     return Response.json(streamers);
-  } catch {
+  } catch (error) {
+    console.error("Streamer database query failed:", error);
+
     return Response.json(
       { error: "Unable to load streamers" },
       { status: 500 }
