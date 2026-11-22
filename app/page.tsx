@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { saveStreamer } from "./actions";
 import { Activity, Bot, Clapperboard, CircleHelp, Film, Gauge, Link2, ListVideo, Radio, Settings, ShieldCheck, Youtube, Twitch, Zap } from "lucide-react";
 
 type Streamer = { name: string; platform: string; permission: boolean };
@@ -19,7 +21,51 @@ export default function Home() {
   const [notice,setNotice] = useState("");
   const [clips,setClips] = useState<{title:string;source:string;status:string}[]>([]);
   const connect = (provider:string) => { window.location.href = `/api/connect/${provider.toLowerCase()}`; };
-  const addStreamer = () => {
+  
+const addStreamer = async () => {
+  if (!name.trim() || !permission) {
+    setNotice("Enter a streamer name and confirm permission.");
+    return;
+  }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    setNotice("Please sign in at /login first.");
+    return;
+  }
+
+  const result = await saveStreamer(
+    name.trim(),
+    platform,
+    true,
+    session.access_token
+  );
+
+  if ("error" in result) {
+    setNotice(result.error || "Unable to save streamer.");
+    return;
+  }
+
+  setStreamers((previous) => [
+    ...previous.filter(
+      (s) =>
+        !(s.name.toLowerCase() === name.trim().toLowerCase()
+          && s.platform === platform)
+    ),
+    { name: name.trim(), platform, permission: true }
+  ]);
+
+  setName("");
+  setPermission(false);
+  setNotice("Streamer saved to Supabase successfully!");
+};
+
     if(!name.trim() || !permission) { setNotice("Enter the streamer's channel name and confirm they have explicitly granted permission."); return; }
     setStreamers([...streamers,{name:name.trim(),platform,permission:true}]); setName(""); setPermission(false); setNotice("Streamer added to your permission list.");
   };
